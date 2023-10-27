@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+use Integrations\PhpSdk\TiiUser;
+
 /**
  * lib for fixing Turnitin EULA issues.
  *
@@ -28,17 +30,25 @@
     $u = $DB->get_record('plagiarism_turnitin_users', ['userid' => $userid]);
     if (empty($u)) {
         return "could not find a Turnitin user record for this user.";
-    } else if (empty($u->user_agreement_accepted)) {
+    } else if (!empty($u->user_agreement_accepted)) {
         return 'Error: User has already accepted the eula';
     }
     $user = new turnitin_user($userid, "Learner");
     if ($user->get_accepted_user_agreement()) {
         return 'User has already accepted the eula, Moodle has been updated to correct this..';
     }
+    $turnitincomms = new turnitin_comms();
+    $turnitincall = $turnitincomms->initialise_api();
+
+    $user = new TiiUser();
+    $user->setUserId($userid);
+
+    $response = $turnitincall->readUser($user);
+    $readuser = $response->getUser();
 
     // User has not accepted - lets trigger an API call to do that for them.
-    $user->setAcceptedUserAgreement(true);
-    $response = $api->updateUser($user);
+    $readuser->setAcceptedUserAgreement(true);
+    $response = $turnitincall->updateUser($readuser);
 
     $newUser = $response->getUser();
     if ($newUser->get_accepted_user_agreement()) {

@@ -43,7 +43,7 @@ $coursecontext = \context_course::instance($courseid);
 list($enrolsql, $params) = get_enrolled_sql($coursecontext, 'mod/assign:submit');
 $sql = "SELECT * FROM {plagiarism_turnitin_users}
          WHERE userid in ($enrolsql)
-          AND tu.user_agreement_accepted = 0";
+          AND user_agreement_accepted = 0";
 $users = $DB->get_records_sql($sql, $params);
 if ($resetall == 1) {
     $urla->param('resetall', '2');
