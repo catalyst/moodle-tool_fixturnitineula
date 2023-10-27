@@ -41,8 +41,8 @@ echo $OUTPUT->single_button($urla, "Reset all users in this course");
 
 $coursecontext = \context_course::instance($courseid);
 list($enrolsql, $params) = get_enrolled_sql($coursecontext, 'mod/assign:submit');
-$sql = "SELECT * FROM ($enrolsql) enrolled_users_view 
-          JOIN {plagiarism_turnitin_users} tu ON tu.userid = enrolled_users_view.id
+$sql = "SELECT * FROM {plagiarism_turnitin_users}
+         WHERE userid in ($enrolsql)
           AND tu.user_agreement_accepted = 0";
 $users = $DB->get_records_sql($sql, $params);
 if ($resetall == 1) {
@@ -67,9 +67,10 @@ $table->set_attribute('class', 'admintable generaltable');
 $table->setup();
 
 foreach($users as $user) {
-    $url = new moodle_url("/admin/tool/fixturnitineula/accepteula.php", ['id' => $courseid, 'userid' => $user->id]);
+    $u = $DB->get_record('user', ['id' => $user->userid]);
+    $url = new moodle_url("/admin/tool/fixturnitineula/accepteula.php", ['id' => $courseid, 'userid' => $user->userid]);
     $actionlink = $OUTPUT->action_link($url, "FIX");
-    $table->add_data(array(fullname($user), $actionlink));
+    $table->add_data(array(fullname($u), $actionlink));
 }
 $table->print_html();
 

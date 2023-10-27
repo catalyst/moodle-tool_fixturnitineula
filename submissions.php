@@ -41,11 +41,11 @@ $urla = new moodle_url("/admin/tool/fixturnitineula/submissions.php", ['id' => $
 echo $OUTPUT->single_button($urla, "Resubmit submissions for all users in this course");
 
 // Find all the users that have a submission record in this course but do not have a plagiarism files record.
-$sql = "SELECT asub.id, asub.userid, asubm.assignment, asub.status, cm.id as cmid  
+$sql = "SELECT asub.id, asub.userid, asub.assignment, asub.status, cm.id as cmid  
           FROM {course_modules} cm
           JOIN {modules} m ON m.id = cm.module AND m.name = 'assign'
           JOIN {assign} a ON a.id = cm.instance
-          JOIN {assign_submissions} asub on asub.assignment = a.id
+          JOIN {assign_submission} asub on asub.assignment = a.id
           JOIN {plagiarism_turnitin_config} pc ON pc.cm = cm.id AND pc.name = 'turnitin_assignid' AND pc.value <> ''
      LEFT JOIN {plagiarism_turnitin_files} pf ON pf.userid = asub.userid AND pf.cm = cm.id
          WHERE cm.course = :courseid AND pf.id is null";
