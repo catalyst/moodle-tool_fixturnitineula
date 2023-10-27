@@ -48,6 +48,28 @@
     }
  }
 
- function tool_fixturnitineula_resubmit_user($userid, $cmid) {
 
+/**
+ * Resubmit a users submission to Turnitin when one did not previously exist.
+ *
+ * @param int $userid
+ * @param int $cmid
+ * @param int $assignid
+ * @return void
+ */
+ function tool_fixturnitineula_resubmit_user($userid, $cmid, $assignid) {
+    global $DB;
+    $submissions = $DB->get_records('assign_submission', ['userid' => $userid, 'assignment' => $assignid]);
+    // Get all submissions for this user in this cmid
+    foreach ($submissions as $assignsubmission) {
+        // Get all files for this submission
+        $filesconditions = ['component' => 'assignsubmission_file',
+                            'itemid' => $assignsubmission->id, 'userid' => $userid];
+        if ($files = $DB->get_records('files', $filesconditions)) {
+            foreach ($files as $file) {
+                $at = new plagiarism_plugin_turnitin();
+                $at->queue_submission_to_turnitin($cmid, $userid, $userid, $file->pathnamehash, 'file', $assignsubmission->id, 'file_uploaded');
+            }
+        }
+    }
  }

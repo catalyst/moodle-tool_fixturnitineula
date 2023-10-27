@@ -25,6 +25,7 @@
 require(__DIR__.'/../../../config.php');
 require_once($CFG->libdir.'/tablelib.php');
 require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->dirroot.'/plagiarism/turnitin/lib.php');
 
 $courseid = required_param('id', PARAM_INT);
 $resetall = optional_param("resetall", 0, PARAM_INT);
@@ -59,7 +60,7 @@ if ($resetall == 1) {
 } elseif ($resetall == 2 and confirm_sesskey()) {
     $responses = [];
    foreach ($users as $user) {
-       $responses[] = tool_fixturnitineula_resubmit_user($user->userid, $user->cmid);
+       $responses[] = tool_fixturnitineula_resubmit_user($user->userid, $user->cmid, $user->assignment);
    }
    echo "All users have been reset";
 }
@@ -74,7 +75,7 @@ $table->setup();
 
 foreach($users as $user) {
     $ur = $DB->get_record("user", ['id' => $user->userid]);
-    $url = new moodle_url("/admin/tool/fixturnitineula/resubmit.php", ['id' => $user->cmid, 'userid' => $user->userid]);
+    $url = new moodle_url("/admin/tool/fixturnitineula/resubmit.php", ['cmid' => $user->cmid, 'userid' => $user->userid, 'assign' => $user->assignment, 'course' => $courseid]);
     $actionlink = $OUTPUT->action_link($url, "FIX");
     $table->add_data(array(fullname($ur), $actionlink));
 }
