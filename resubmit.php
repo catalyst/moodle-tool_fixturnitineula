@@ -39,4 +39,5 @@ $PAGE->set_url($url);
 $PAGE->set_title(get_string('pluginname', 'tool_fixturnitineula'));
 
 $response = tool_fixturnitineula_resubmit_user($userid, $cmid, $assignment);
+
 redirect($url, $response);

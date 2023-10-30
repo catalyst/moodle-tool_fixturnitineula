@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 use Integrations\PhpSdk\TiiUser;
+use Integrations\PhpSdk\TiiLTI;
 
 /**
  * lib for fixing Turnitin EULA issues.
@@ -33,29 +34,18 @@ use Integrations\PhpSdk\TiiUser;
     } else if (!empty($u->user_agreement_accepted)) {
         return 'Error: User has already accepted the eula';
     }
-    $user = new turnitin_user($userid, "Learner");
-    if ($user->get_accepted_user_agreement()) {
+    $tuser = new turnitin_user($userid, "Learner");
+    if ($tuser->get_accepted_user_agreement()) {
         return 'User has already accepted the eula, Moodle has been updated to correct this..';
     }
     $turnitincomms = new turnitin_comms();
     $turnitincall = $turnitincomms->initialise_api();
 
-    $user = new TiiUser();
-    $user->setUserId($userid);
 
-    $response = $turnitincall->readUser($user);
-    $readuser = $response->getUser();
-
-    // User has not accepted - lets trigger an API call to do that for them.
-    $readuser->setAcceptedUserAgreement(true);
-    $response = $turnitincall->updateUser($readuser);
-
-    $newUser = $response->getUser();
-    if ($newUser->get_accepted_user_agreement()) {
-        return 'The EULA for this user has now been accepted.';
-    } else {
-        return "An attempt to set the EULA for this user failed.";
-    }
+    $lti = new TiiLTI();
+    $lti->setUserId($tuser->tiiuserid);
+    $lti->setRole('learner');
+    $turnitincall->outputUserAgreementForm($lti);
  }
 
 
@@ -70,6 +60,7 @@ use Integrations\PhpSdk\TiiUser;
  function tool_fixturnitineula_resubmit_user($userid, $cmid, $assignid) {
     global $DB;
     $submissions = $DB->get_records('assign_submission', ['userid' => $userid, 'assignment' => $assignid]);
+    $coursemodule = get_coursemodule_from_id('assign', $cmid);
     // Get all submissions for this user in this cmid
     foreach ($submissions as $assignsubmission) {
         // Get all files for this submission
@@ -77,8 +68,11 @@ use Integrations\PhpSdk\TiiUser;
                             'itemid' => $assignsubmission->id, 'userid' => $userid];
         if ($files = $DB->get_records('files', $filesconditions)) {
             foreach ($files as $file) {
+                if (empty($file->filesize)) {
+                    continue;
+                }
                 $at = new plagiarism_plugin_turnitin();
-                $at->queue_submission_to_turnitin($cmid, $userid, $userid, $file->pathnamehash, 'file', $assignsubmission->id, 'file_uploaded');
+                $at->queue_submission_to_turnitin($coursemodule, $userid, $userid, $file->pathnamehash, 'file', $assignsubmission->id, 'file_uploaded');
             }
         }
     }

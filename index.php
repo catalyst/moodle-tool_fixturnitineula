@@ -25,6 +25,8 @@
 require(__DIR__.'/../../../config.php');
 require_once($CFG->libdir.'/tablelib.php');
 require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->dirroot.'/admin/tool/fixturnitineula/locallib.php');
+require_once($CFG->dirroot.'/plagiarism/turnitin/lib.php');
 
 $courseid = required_param('id', PARAM_INT);
 $resetall = optional_param("resetall", 0, PARAM_INT);
@@ -37,7 +39,7 @@ $PAGE->set_title(get_string('pluginname', 'tool_fixturnitineula'));
 
 echo $OUTPUT->header();
 $urla = new moodle_url("/admin/tool/fixturnitineula/index.php", ['id' => $courseid, "resetall" => 1]);
-echo $OUTPUT->single_button($urla, "Reset all users in this course");
+//echo $OUTPUT->single_button($urla, "Reset all users in this course");
 
 $coursecontext = \context_course::instance($courseid);
 list($enrolsql, $params) = get_enrolled_sql($coursecontext, 'mod/assign:submit');
@@ -67,9 +69,14 @@ $table->set_attribute('class', 'admintable generaltable');
 $table->setup();
 
 foreach($users as $user) {
+    $tuser = new turnitin_user($user->userid, "Learner");
+    if ($tuser->get_accepted_user_agreement()) {
+        continue;
+    }
     $u = $DB->get_record('user', ['id' => $user->userid]);
+
     $url = new moodle_url("/admin/tool/fixturnitineula/accepteula.php", ['id' => $courseid, 'userid' => $user->userid]);
-    $actionlink = $OUTPUT->action_link($url, "FIX");
+    $actionlink = $OUTPUT->action_link($url, "Accept EULA", null, ['target' => '_blank']);
     $table->add_data(array(fullname($u), $actionlink));
 }
 $table->print_html();

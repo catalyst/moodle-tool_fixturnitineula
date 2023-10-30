@@ -37,4 +37,4 @@ $PAGE->set_url($url);
 $PAGE->set_title(get_string('pluginname', 'tool_fixturnitineula'));
 
 $response = tool_fixturnitineula_fix_user($userid);
-redirect($url, $response);
+echo '<script>document.querySelector("form").submit();</script>';

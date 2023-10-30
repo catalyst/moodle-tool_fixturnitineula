@@ -26,6 +26,7 @@ require(__DIR__.'/../../../config.php');
 require_once($CFG->libdir.'/tablelib.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->dirroot.'/plagiarism/turnitin/lib.php');
+require_once($CFG->dirroot.'/admin/tool/fixturnitineula/locallib.php');
 
 $courseid = required_param('id', PARAM_INT);
 $resetall = optional_param("resetall", 0, PARAM_INT);
@@ -75,7 +76,7 @@ $table->setup();
 
 foreach($users as $user) {
     $ur = $DB->get_record("user", ['id' => $user->userid]);
-    $url = new moodle_url("/admin/tool/fixturnitineula/resubmit.php", ['cmid' => $user->cmid, 'userid' => $user->userid, 'assign' => $user->assignment, 'course' => $courseid]);
+    $url = new moodle_url("/admin/tool/fixturnitineula/resubmit.php", ['cmid' => $user->cmid, 'userid' => $user->userid, 'assignment' => $user->assignment, 'course' => $courseid]);
     $actionlink = $OUTPUT->action_link($url, "FIX");
     $table->add_data(array(fullname($ur), $actionlink));
 }
